@@ -313,6 +313,7 @@ static const char *longUsageList[] = {
                                    "PFFFT = 1, vDSP =2)"),
   Str_noop("--udp-echo              echo UDP commands on terminal"),
   Str_noop("--aft-zero              set aftertouch to zero, not 127 (default)"),
+  Str_noop("--limiter[=num]         include clipping in audio output"),
   " ",
   Str_noop("--help                  long help"),
   NULL
@@ -1212,16 +1213,30 @@ static int decode_long(CSOUND *csound, char *s, int argc, char **argv)
       csound->info_message_request = 1;
       return 1;
     }
-    else if(!strncmp(s, "use-system-sr",13)){
+    else if(!strncmp(s, "use-system-sr",13)) {
       if (O->sr_override == FL(0.0))
           O->sr_override = FL(-1.0);
       return 1;
     }
-    else if (!(strcmp(s, "aft-zero"))){
+    else if (!(strcmp(s, "aft-zero"))) {
       csound->aftouch = 0;
       return 1;
     }
+    else if (!(strncmp(s, "limiter=", 8)))  {
+      s += 8;
+      O->limiter = atof(s);
+      if (O->limiter>1.0 || O->limiter<0) {
+        csound->MessageS(csound, CSOUNDMSG_STDOUT,
+                         Str("Ignoring invalid limiter\n"));
+        O->limiter = 0;
+      }
+      return 1;
 
+    }
+    else if (!(strcmp(s, "limiter"))) {
+      O->limiter = 0.5;
+      return 1;
+    }
     csoundErrorMsg(csound, Str("unknown long option: '--%s'"), s);
     return 0;
 }
